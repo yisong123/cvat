@@ -1350,8 +1350,51 @@ export class Canvas3dViewImpl implements Canvas3dView, Listener {
         };
 
         // eslint-disable-next-line no-param-reassign
+        points.material.vertexColors = true;
         points.material.size = 0.05;
         points.material.color.set(new THREE.Color(0xffffff));
+
+        const colors = [];
+        const max = new THREE.Box3().setFromObject(points);
+        const center = max.getCenter(new THREE.Vector3());
+        const distanceMax = Math.sqrt(
+            (center.x - max.max.x) ** 2 +
+            (center.y - max.max.y) ** 2 +
+            (center.z - max.max.z) ** 2,
+        );
+
+        const zMax = max.max.z;
+        const zMin = max.min.z;
+
+        const { count, array } = points.geometry.attributes.position;
+        const color = new THREE.Color();
+        let i = 0;
+
+        // while (i < count) {
+        //     const x = points.geometry.attributes.position.getX(i);
+        //     const y = points.geometry.attributes.position.getY(i);
+        //     const z = points.geometry.attributes.position.getZ(i);
+        //     const distance = Math.sqrt(
+        //         (center.x - x) ** 2 +
+        //         (center.y - y) ** 2 +
+        //         (center.z - z) ** 2,
+        //     );
+
+        //     const offset = distance / distanceMax;
+        //     color.setRGB(offset, 0.5, 1 - offset);
+        //     colors.push(color.r, color.g, color.b);
+        //     i++;
+        // }
+
+        while (i < count) {
+            const z = points.geometry.attributes.position.getZ(i);
+            const offset = (z - zMin) / (zMax - zMin);
+            color.setRGB(offset, 0, 1);
+            colors.push(color.r, color.g, color.b);
+            i++;
+        }
+
+        points.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
         const { controls } = this.views.perspective;
         controls.mouseButtons.wheel = CameraControls.ACTION.DOLLY;
